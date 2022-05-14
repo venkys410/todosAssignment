@@ -59,6 +59,18 @@ const hasStatusProperty = (requestQuery) => {
 const hasCategoryProperty = (requestQuery) => {
   return requestQuery.category !== undefined;
 };
+
+const convertDbToResponse = (dbObject) => {
+  return {
+    id: dbObject.id,
+    todo: dbObject.todo,
+    priority: dbObject.priority,
+    status: dbObject.status,
+    category: dbObject.category,
+    dueDate: dbObject.due_date,
+  };
+};
+
 app.get("/todos/", async (request, response) => {
   let data = null;
   let getTodosQuery = "";
@@ -139,7 +151,8 @@ app.get("/todos/", async (request, response) => {
   }
   //console.log(getTodosQuery);
   data = await database.all(getTodosQuery);
-  response.send(data);
+  const formattedData = data.map((eachTodo) => convertDbToResponse(eachTodo));
+  response.send(formattedData);
 });
 
 //API 2
@@ -154,7 +167,9 @@ app.get("/todos/:todoId/", async (request, response) => {
     WHERE
       id = ${todoId};`;
   const todo = await database.get(getTodoQuery);
-  response.send(todo);
+  console.log(todo);
+  const formattedTodo = convertDbToResponse(todo);
+  response.send(formattedTodo);
 });
 
 //API 3
@@ -169,7 +184,10 @@ app.get("/agenda/", async (request, response) => {
     const formatedDate = format(new Date(date), "yyyy-MM-dd");
     const getAgendaQuery = `SELECT * FROM todo WHERE due_date = "${formatedDate}";`;
     const todosArray = await database.all(getAgendaQuery);
-    response.send(todosArray);
+    const formattedArray = todosArray.map((eachTodo) =>
+      convertDbToResponse(eachTodo)
+    );
+    response.send(formattedArray);
   } else {
     response.status(400);
     response.send("Invalid Due Date");
